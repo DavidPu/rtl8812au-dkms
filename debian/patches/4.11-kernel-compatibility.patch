@@ -1,0 +1,14 @@
+Index: rtl8812au-4.3.8.12175.20140902+dfsg/include/osdep_service_linux.h
+===================================================================
+--- rtl8812au-4.3.8.12175.20140902+dfsg.orig/include/osdep_service_linux.h
++++ rtl8812au-4.3.8.12175.20140902+dfsg/include/osdep_service_linux.h
+@@ -46,6 +46,9 @@
+ #endif
+ 	#include <linux/sem.h>
+ 	#include <linux/sched.h>
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0))
++	#include <linux/sched/signal.h>
++#endif
+ 	#include <linux/etherdevice.h>
+ 	#include <linux/wireless.h>
+ 	#include <net/iw_handler.h>

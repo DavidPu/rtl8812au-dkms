@@ -1,0 +1,22 @@
+From: Marcelo Cerri <marcelo.cerri@canonical.com>
+Subject: Fix build for 5.0
+
+BugLink: https://bugs.launchpad.net/bugs/1813068
+
+Signed-off-by: Marcelo Cerri <marcelo.cerri@canonical.com>
+Signed-off-by: Connor Kuehl <connor.kuehl@canonical.com>
+---
+--- a/os_dep/linux/rtw_android.c
++++ b/os_dep/linux/rtw_android.c
+@@ -608,7 +608,11 @@
+ 		goto exit;
+ 	}
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	if (!access_ok(priv_cmd.buf, priv_cmd.total_len)){
++#else
+ 	if (!access_ok(VERIFY_READ, priv_cmd.buf, priv_cmd.total_len)){
++#endif
+ 	 	DBG_871X("%s: failed to access memory\n", __FUNCTION__);
+ 		ret = -EFAULT;
+ 		goto exit;

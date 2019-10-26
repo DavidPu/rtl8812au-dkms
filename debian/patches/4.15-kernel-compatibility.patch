@@ -1,0 +1,97 @@
+--- a/include/osdep_service_linux.h
++++ b/include/osdep_service_linux.h
+@@ -116,7 +116,16 @@
+ #else
+ 	typedef struct semaphore	_mutex;
+ #endif
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
++	struct _compat_timer_list {
++		struct timer_list tl;
++		void (*function)(unsigned long);
++		unsigned long data;
++	};
++	typedef struct _compat_timer_list _timer;
++#else
+ 	typedef struct timer_list _timer;
++#endif
+ 
+ 	struct	__queue	{
+ 		struct	list_head	queue;	
+@@ -249,22 +258,35 @@
+ 
+ #define RTW_TIMER_HDL_ARGS void *FunctionContext
+ 
++
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
++static void _compat_init_timer_func(struct timer_list *tl)
++{
++	struct _compat_timer_list *compat = from_timer(compat, tl, tl);
++	compat->function(compat->data);
++}
++#endif
++
+ __inline static void _init_timer(_timer *ptimer,_nic_hdl nic_hdl,void *pfunc,void* cntx)
+ {
+ 	//setup_timer(ptimer, pfunc,(u32)cntx);	
+ 	ptimer->function = pfunc;
+ 	ptimer->data = (unsigned long)cntx;
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
++	timer_setup(&ptimer->tl, _compat_init_timer_func, 0);
++#else
+ 	init_timer(ptimer);
++#endif
+ }
+ 
+ __inline static void _set_timer(_timer *ptimer,u32 delay_time)
+ {	
+-	mod_timer(ptimer , (jiffies+(delay_time*HZ/1000)));	
++	mod_timer((struct timer_list *) ptimer , (jiffies+(delay_time*HZ/1000)));
+ }
+ 
+ __inline static void _cancel_timer(_timer *ptimer,u8 *bcancelled)
+ {
+-	del_timer_sync(ptimer); 	
++	del_timer_sync((struct timer_list *) ptimer);
+ 	*bcancelled=  _TRUE;//TRUE ==1; FALSE==0
+ }
+ 
+--- a/include/osdep_service.h
++++ b/include/osdep_service.h
+@@ -319,7 +319,7 @@
+ __inline static unsigned char _cancel_timer_ex(_timer *ptimer)
+ {
+ #ifdef PLATFORM_LINUX
+-	return del_timer_sync(ptimer);
++	return del_timer_sync((struct timer_list *) ptimer);
+ #endif
+ #ifdef PLATFORM_FREEBSD
+ 	_cancel_timer(ptimer,0);
+--- a/hal/OUTSRC/phydm_types.h
++++ b/hal/OUTSRC/phydm_types.h
+@@ -281,7 +281,7 @@
+ 
+ 	typedef struct rtl8192cd_priv	*prtl8192cd_priv;
+ 	typedef struct stat_info		STA_INFO_T,*PSTA_INFO_T;
+-	typedef struct timer_list		RT_TIMER, *PRT_TIMER;
++	typedef _timer				RT_TIMER, *PRT_TIMER;
+ 	typedef  void *				RT_TIMER_CALL_BACK;
+ 
+ #ifdef CONFIG_PCI_HCI
+@@ -316,7 +316,7 @@
+ 
+ 	typedef struct rtl8192cd_priv	*prtl8192cd_priv;
+ 	typedef struct stat_info		STA_INFO_T,*PSTA_INFO_T;
+-	typedef struct timer_list		RT_TIMER, *PRT_TIMER;
++	typedef _timer				RT_TIMER, *PRT_TIMER;
+ 	typedef  void *				RT_TIMER_CALL_BACK;
+ 	
+ 	#define DEV_BUS_TYPE		RT_PCI_INTERFACE
+@@ -379,7 +379,7 @@
+ 		#define	ODM_ENDIAN_TYPE			ODM_ENDIAN_BIG
+ 	#endif
+ 	
+-	typedef struct timer_list		RT_TIMER, *PRT_TIMER;
++	typedef _timer				RT_TIMER, *PRT_TIMER;
+ 	typedef  void *				RT_TIMER_CALL_BACK;
+ 	#define	STA_INFO_T			struct sta_info
+ 	#define	PSTA_INFO_T		struct sta_info *
