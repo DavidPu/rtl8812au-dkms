@@ -1,0 +1,14 @@
+[Unit]
+Description=Realink AC1300 WiFi adapter(2357:010d)
+Before=network.target
+After=dbus.service
+Wants=network.target
+IgnoreOnIsolate=true
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wlx503eaa629e74
+
+[Install]
+WantedBy=multi-user.target
+# Alias=dbus-fi.w1.wpa_supplicant1.service
