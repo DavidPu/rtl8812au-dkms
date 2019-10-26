@@ -1,5 +1,6 @@
 #!/bin/bash
 
+make -j10 && sudo make install
 cp wlx503eaa629e74 /usr/local/bin/
 cp wpa_supplicant.conf /etc/wpa_supplicant.conf
 cp usbwifi.service /etc/systemd/system/

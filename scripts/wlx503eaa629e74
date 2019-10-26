@@ -1,14 +1,20 @@
 #!/bin/bash
-
+set -x
 ifcfg=wlx503eaa629e74
 while true; do
-    rfkill unblock all
-    killall wpa_supplicant
-    killall dhclient
-    /sbin/wpa_supplicant -B -u -s -c /etc/wpa_supplicant.conf -D wext -i ${ifcfg}
-    sleep 5
-    dhclient -nw -v ${ifcfg}
-
+    if ! ping -I ${ifcfg} -c 1 www.google.com; then
+        rfkill unblock all
+        killall wpa_supplicant
+        killall dhclient
+        if ! lsmod |grep -q 8812au; then
+            echo "modprob 8812au"
+            modprob 8812au
+            sleep 6
+        fi
+        /sbin/wpa_supplicant -B -u -s -c /etc/wpa_supplicant.conf -D wext -i ${ifcfg}
+        sleep 5
+        dhclient -nw -v ${ifcfg}
+    fi
     sleep 30
-    while ping -c 1 www.google.com; do sleep 10; done
+    while ping -I ${ifcfg} -c 1 www.google.com; do sleep 10; done
 done
